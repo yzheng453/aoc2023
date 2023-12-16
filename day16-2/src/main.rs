@@ -11,13 +11,41 @@ fn read_lines(filename: &str) -> Vec<String> {
         
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-struct Direction(i32, i32, usize);
+#[derive(Clone, Copy)]
+enum Direction {
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT,
+}
 
-const UP: Direction = Direction(-1, 0, 0);
-const DOWN: Direction = Direction(1, 0, 1);
-const LEFT: Direction = Direction(0, -1, 2);
-const RIGHT: Direction = Direction(0, 1, 3);
+use Direction::*;
+
+fn dx(d: Direction) -> i32 {
+    match d {
+        UP => -1,
+        DOWN => 1,
+        LEFT => 0,
+        RIGHT => 0,
+    }
+}
+
+fn dy(d: Direction) -> i32  {
+    match d {
+        LEFT => -1,
+        RIGHT => 1,
+        UP | DOWN => 0,
+    }
+}
+
+fn id(d: Direction) -> usize {
+    match d {
+        UP => 0,
+        DOWN => 1,
+        LEFT => 2,
+        RIGHT => 3,
+    }
+}
 
 struct BeamPoint{
     p: (usize, usize),
@@ -25,13 +53,13 @@ struct BeamPoint{
 }
 
 fn mv(x: usize, y: usize, d: Direction, a: &mut VecDeque<BeamPoint>, energized: &mut Vec<Vec<[bool; 4]>>) {
-    let x = x as i32 + d.0;
-    let y = y as i32 + d.1;
+    let x = x as i32 + dx(d);
+    let y = y as i32 + dy(d);
     if let Ok(xu) = usize::try_from(x) {
         if let Ok(yu) = usize::try_from(y) {
             if let Some(flags) = energized.get_mut(xu).and_then(|m| m.get_mut(yu)) {
-                if flags[d.2] == false {
-                    flags[d.2] = true;
+                if flags[id(d)] == false {
+                    flags[id(d)] = true;
                     a.push_back(BeamPoint{p: (xu, yu), d: d});            
                 }
             }
@@ -41,7 +69,7 @@ fn mv(x: usize, y: usize, d: Direction, a: &mut VecDeque<BeamPoint>, energized: 
 
 fn calc_for_starting_point(s: BeamPoint, map: &Vec<Vec<u8>>) -> i32 {
     let mut energized: Vec<Vec<[bool; 4]>> = (0..map.len()).map(|_| (0..map[0].len()).map(|_| [false, false, false, false]).collect()).collect();
-    energized[s.p.0][s.p.1][s.d.2] = true;
+    energized[s.p.0][s.p.1][id(s.d)] = true;
     let mut a: VecDeque<BeamPoint> = VecDeque::new();
     a.push_back(s);
     while let Some(c) = a.pop_front() {
